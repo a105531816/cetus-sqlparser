@@ -1,142 +1,115 @@
-# Cetus
+# cetus-sqlparser
 
 ##  简介
-
-Cetus是由C语言开发的关系型数据库MySQL的中间件，主要提供了一个全面的数据库访问代理功能。Cetus连接方式与MySQL基本兼容，应用程序几乎不用修改即可通过Cetus访问数据库，实现了数据库层的水平扩展和高可用。
-
-## 版本选择
-
-生产环境，建议选择最新的[Release版本](https://github.com/cetus-tools/cetus/releases)使用。
-
-
-## 主要功能特性
-
-Cetus分为读写分离和分库（分表是分库的一种特殊形式）两个版本。
-
-**针对读写分离版本：**
-
-- 多进程无锁提升运行效率
-
-- 支持透明的后端连接池
-
-- 支持SQL读写分离
-
-- 增强SQL路由解析与注入
-
-- 支持prepare语句
-
-- 支持结果集压缩
-
-- 支持安全性管理
-
-- 支持状态监控
-
-- 支持tcp stream流式
-
-- 支持域名连接后端
-
-- SSL/TLS支持（客户端）
-
-- MGR支持
-
-- 读强一致性支持（待实现）
-
-**针对分库版本：**
-
-- 多进程无锁提升运行效率
-
-- 支持透明的后端连接池
-
-- 支持SQL读写分离
-
-- 支持数据分库
-
-- 支持分布式事务处理
-
-- 支持insert批量操作
-
-- 支持有条件的distinct操作
-
-- 增强SQL路由解析与注入
-
-- 支持结果集压缩
-
-- 具有性能优越的结果集合并算法
-
-- 支持安全性管理
-
-- 支持状态监控
-
-- 支持tcp stream流式
-
-- 支持域名连接后端
-
-- SSL/TLS支持（客户端）
-
-- MGR支持
-
-- 读强一致性支持（待实现）
-
-## 详细说明
-
-### Cetus安装与使用
-
-1. [Cetus 快速入门](./doc/cetus-quick-try.md)
-
-2. [Cetus 安装说明](./doc/cetus-install.md)
-
-3. [Cetus 读写分离版配置文件说明](./doc/cetus-rw-profile.md)
-
-4. [Cetus 分库(sharding)版配置文件说明](./doc/cetus-shard-profile.md)
-
-5. [Cetus 启动配置选项说明](./doc/cetus-configuration.md)
-
-6. [Cetus 使用约束说明](./doc/cetus-constraint.md)
-
-7. [Cetus 读写分离版使用指南](./doc/cetus-rw.md)
-
-8. [Cetus 读写分离版管理手册](./doc/cetus-rw-admin.md)
-
-9. [Cetus 分库(sharding)版使用指南](./doc/cetus-sharding.md)
-
-10. [Cetus 分库(sharding)版管理手册](./doc/cetus-shard-admin.md)
-
-11. [Cetus 全量日志使用手册](./doc/cetus-sqllog-usage.md)
-
-12. [Cetus 路由策略介绍](./doc/cetus-routing-strategy.md)
-
-13. [Cetus 分表使用说明](./doc/cetus-partition-profile.md)
-
-14. [Cetus数据迁移追数工具使用手册](./dumpbinlog-tool/readme.md)
-
-### Cetus架构与设计
-
-[Cetus 架构和实现](./doc/cetus-architecture.md)
-
-### Cetus发现的MySQL xa事务问题
-
-[MySQL xa事务问题说明](./doc/mysql-xa-bug.md)
-
-### Cetus辅助
-
-1. [Cetus xa悬挂处理工具](./doc/cetus-xa.md)
-
-2. [Cetus + mha高可用方案](./doc/cetus-mha.md)
-
-3. [Cetus rpm说明](./doc/cetus-rpm.md)
-
-4. [Cetus Docker镜像使用](./doc/cetus-docker.md)
-
-5. [Cetus 图形化Web管理界面](https://github.com/Lede-Inc/Cetus-GUI)
-
-### Cetus测试
-
-[Cetus 测试报告](./doc/cetus-test.md)
-
-## 反馈
-
-如果您在使用Cetus的过程中发现BUG或者有新的功能需求，欢迎在issue里面提出来，或者加入QQ群(521824702)进行交流。
-
-## 加入Cetus知识星球，享受优质服务
-
-![cetus](https://raw.github.com/cetus-tools/cetus/master/doc/cetus知识星球二维码.png)
+cetus-sqlparser是从Cetus项目中剥离出的一个简单的SQL解析器。关于Cetus更多的介绍，可以跳转到cetus主页：
+https://github.com/cetus-tools/cetus
+
+## 使用简介
+
+### 安装
+我认为所有使用此项目的人员都是具备基本的c/c++代码能力的，所以此项目不提供编译好的安装包，所有的安装使用都需要你来
+动手实现。
+```asm
+#安装依赖
+yum install cmake gcc glib2-devel flex
+#下载代码
+git clone   https://github.com/sunashe/cetus-sqlparser.git
+
+cd cetus-sqlparser
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local/cetus-sqlparser -DSIMPLE_PARSER=OFF
+
+#你可以手动建立软连接，或者在自己的项目中去指定库地址。
+ln -s /usr/local/cetus-sqlparser/lib/libsqlparser.so /usr/lib64/
+```
+
+### 使用示例
+我们以一个简单的示例来展示cetus-sqlparser的用法，假设你想使用cetus-sqlparser来解析一条SQL语句，并且输出这条SQL
+语句中的表名，如下：
+```cpp
+//
+// Created by ashe on 2020/2/11.
+//
+#include <stdio.h>
+#include "sql-context.h"
+#include <glib.h>
+#include "sql-property.h"
+#include "sql-expression.h"
+void print_sql_table_names(GString* sql)
+{
+
+	sql_context_t* context = g_new0(sql_context_t, 1);
+	sql_context_parse_len(context, sql);
+	int i=0;
+	switch(context->stmt_type)
+	{
+		case STMT_INSERT:
+		{
+			sql_insert_t *sql_insert = (sql_insert_t*)context->sql_statement;
+			for(i=0;i<sql_insert->table->len;i++)
+			{
+				sql_src_item_t* src =g_ptr_array_index(sql_insert->table,i);
+				printf("table name %s\n",src->table_name);
+			}
+			break;
+		}
+		case STMT_DELETE:
+		{
+			sql_delete_t *sql_delete = (sql_delete_t*)context->sql_statement;
+			for(i=-0;i < sql_delete->from_src->len;i++)
+			{
+				sql_src_item_t* src =  g_ptr_array_index(sql_delete->from_src,i);
+				printf("table name %s\n",src->table_name);
+			}
+			break;
+		}
+		case STMT_UPDATE:
+		{
+			sql_update_t *sql_update = (sql_update_t*)context->sql_statement;
+			for (i = 0; i < sql_update->table_reference->table_list->len; ++i)
+			{
+				sql_src_item_t *src = g_ptr_array_index(sql_update->table_reference->table_list, i);
+				printf("table name %s\n",src->table_name);
+			}
+			break;
+		}
+		case STMT_SELECT:
+		{
+			sql_select_t *sql_select = (sql_select_t*)context->sql_statement;
+			for (i = 0; i < sql_select->from_src->len; ++i)
+			{
+				sql_src_item_t *src = g_ptr_array_index(sql_select->from_src, i);
+				printf("table name %s\n",src->table_name);
+			}
+			break;
+		}
+		default:
+		{
+			printf("ignore sql\n");
+		}
+	}
+	sql_context_destroy(context);
+	g_free(context);
+}
+
+int main()
+{
+	int i=0;
+	GString* sql_select = g_string_new("select * from t1 as C join t2 as D on C.id = D.id");
+	g_string_append_c(sql_select, '\0'); /* 2 more NULL for lexer EOB */
+	g_string_append_c(sql_select, '\0');
+	print_sql_table_names(sql_select);
+	g_string_free(sql_select,TRUE);
+	return 0;
+}
+
+```
+编译运行
+```asm
+-rw-rw-r--. 1 parallels parallels 1896 2月  23 15:04 ashe.c
+[parallels@Clion-CentOS-7 test]$ gcc ashe.c -I/usr/local/cetus-sqlparser/include  -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include  -L/usr/local/cetus-sqlparser/lib -lsqlparser -lglib-2.0 -lm  -o ashe
+[parallels@Clion-CentOS-7 test]$ ./ashe
+table name t1
+table name t2
+```

@@ -248,4 +248,3 @@ ADD_SUBDIRECTORY(lib)
 
 CONFIGURE_FILE(mysql-chassis.pc.cmake mysql-chassis.pc @ONLY)
 CONFIGURE_FILE(cetus.pc.cmake cetus.pc @ONLY)
-add_subdirectory(examples)
